@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: python-platform-production
+  namespace: argocd
+spec:
+  project: python-platform
+  sources:
+    - repoURL: https://github.com/Bronsborought/python-gke-platform.git
+      targetRevision: "aeb3a4b7a7aca6b0b90d354c0cfb1d267e7a7f7f"
+      path: charts/python-platform
+      helm:
+        releaseName: python-platform
+        valueFiles:
+          - $values/environments/production/values.yaml
+    - repoURL: https://github.com/Bronsborought/python-gke-platform-gitops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform-production
+  syncPolicy:
+    syncOptions:
+      - FailOnSharedResource=true
