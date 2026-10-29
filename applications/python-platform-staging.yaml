@@ -20,5 +20,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: platform-staging
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
     syncOptions:
       - FailOnSharedResource=true
