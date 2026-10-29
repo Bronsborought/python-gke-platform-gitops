@@ -1,0 +1,15 @@
+image:
+  repository: trialokuvu3.jfrog.io/docker-local/python-gke-platform
+  digest: "sha256:e41736c004562b059351a4aced8a7bf933cf88f9e2cefcc8205cbd7f5b2058b9"
+
+app:
+  environment: production
+  logLevel: INFO
+  existingSecret: python-platform-app
+
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: "python-platform-app@python-gke-dt-20261027.iam.gserviceaccount.com"
+
+ingress:
+  enabled: true

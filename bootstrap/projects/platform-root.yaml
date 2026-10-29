@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-root
+  namespace: argocd
+spec:
+  description: Root application for platform child applications
+  sourceRepos:
+    - https://github.com/Bronsborought/python-gke-platform-gitops.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application

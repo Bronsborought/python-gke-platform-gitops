@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: python-platform
+  namespace: argocd
+spec:
+  description: Python platform staging and production
+  sourceRepos:
+    - https://github.com/Bronsborought/python-gke-platform.git
+    - https://github.com/Bronsborought/python-gke-platform-gitops.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: platform-staging
+    - server: https://kubernetes.default.svc
+      namespace: platform-production
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: cloud.google.com
+      kind: BackendConfig
