@@ -1,6 +1,7 @@
 image:
   repository: trialokuvu3.jfrog.io/docker-local/python-gke-platform
-  digest: "sha256:e41736c004562b059351a4aced8a7bf933cf88f9e2cefcc8205cbd7f5b2058b9"
+  tag: "v0.1.0-50cc441c4e10"
+  digest: "sha256:f9a098760cff5edde15e9376720a419e7bfbeac481d3a94d207934ae1e117941"
 
 app:
   environment: staging
