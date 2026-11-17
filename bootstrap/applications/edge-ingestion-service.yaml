@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: edge-ingestion-service
+  namespace: argocd
+spec:
+  project: platform-edge
+  source:
+    repoURL: https://github.com/Bronsborought/python-gke-platform-gitops.git
+    targetRevision: main
+    path: edge/ingestion-service
+  destination:
+    server: https://10.200.0.2:6443
+    namespace: edge-workloads
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

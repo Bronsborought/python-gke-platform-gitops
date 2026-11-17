@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-edge
+  namespace: argocd
+spec:
+  description: Hybrid Edge K3s workloads on Raspberry Pi CM5
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "*"
+      server: https://10.200.0.2:6443
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

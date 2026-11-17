@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-ingestion-service
+  namespace: edge-workloads
+  labels:
+    app: edge-ingestion-service
+    tier: edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edge-ingestion-service
+  template:
+    metadata:
+      labels:
+        app: edge-ingestion-service
+        tier: edge
+    spec:
+      imagePullSecrets:
+        - name: jfrog-registry-secret
+      containers:
+        - name: ingestion-app
+          image: trial2mrxfh.jfrog.io/docker-local/python-platform-app:v1.2.0
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: APP_ENV
+              value: "edge-cm5"
+            - name: ANNOTATION_DATA_DIR
+              value: "/data/annotation"
+            - name: EDGE_PIPELINE_REVISION
+              value: "rev-1"
+          volumeMounts:
+            - name: zfs-annotation-storage
+              mountPath: /data/annotation
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      volumes:
+        - name: zfs-annotation-storage
+          hostPath:
+            path: /srv/data/annotation
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-ingestion-service
+  namespace: edge-workloads
+  labels:
+    app: edge-ingestion-service
+spec:
+  type: ClusterIP
+  selector:
+    app: edge-ingestion-service
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
