@@ -1,7 +1,7 @@
 image:
   tag: "v1.2.0"
-  repository: trial2mrxfh.jfrog.io/docker-local/python-gke-platform
-  digest: "sha256:f9a098760cff5edde15e9376720a419e7bfbeac481d3a94d207934ae1e117941"
+  repository: trial2mrxfh.jfrog.io/docker-local/python-platform-app
+  digest: ""
 
 app:
   environment: production
