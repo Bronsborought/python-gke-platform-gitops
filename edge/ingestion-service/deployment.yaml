@@ -31,19 +31,19 @@ spec:
             - name: ANNOTATION_DATA_DIR
               value: "/data/annotation"
             - name: EDGE_PIPELINE_REVISION
-              value: "rev-1"
+              value: "rev-2"
           volumeMounts:
             - name: zfs-annotation-storage
               mountPath: /data/annotation
           readinessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 15
