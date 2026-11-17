@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rpi-cm5-edge-exporter
+  namespace: monitoring
+  labels:
+    app: rpi-cm5-edge-exporter
+    jobLabel: rpi-cm5-edge
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-metrics
+      port: 9100
+      targetPort: 9100
+      protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: rpi-cm5-edge-exporter
+  namespace: monitoring
+  labels:
+    app: rpi-cm5-edge-exporter
+subsets:
+  - addresses:
+      - ip: 10.200.0.2
+    ports:
+      - name: http-metrics
+        port: 9100
+        protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rpi-cm5-edge-exporter
+  namespace: monitoring
+  labels:
+    release: platform-monitoring
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: rpi-cm5-edge-exporter
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: http-metrics
+      interval: 15s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rpi-cm5-hardware-alerts
+  namespace: monitoring
+  labels:
+    release: platform-monitoring
+spec:
+  groups:
+    - name: rpi-cm5-edge-hardware.rules
+      rules:
+        - alert: RPiCM5HighSoCTemperature
+          expr: rpi_cm5_soc_temperature_celsius > 75 or node_hwmon_temp_celsius{chip="thermal_thermal_zone0"} > 75
+          for: 2m
+          labels:
+            severity: warning
+            node: cm5-node
+          annotations:
+            summary: "Raspberry Pi CM5 SoC temperature exceeds 75C"
+            description: "Broadcom BCM2712 SoC temperature on cm5-node has exceeded 75C for more than 2 minutes (current: {{ $value }}C)."
+        - alert: RPiCM5UnderVoltageDetected
+          expr: rpi_cm5_under_voltage_active > 0
+          for: 1m
+          labels:
+            severity: critical
+            node: cm5-node
+          annotations:
+            summary: "Raspberry Pi CM5 USB-C PD under-voltage detected"
+            description: "vcgencmd reports under-voltage / throttling on cm5-node."
+        - alert: RPiCM5ZFSPoolDegraded
+          expr: rpi_cm5_zfs_pool_online_status == 0
+          for: 1m
+          labels:
+            severity: critical
+            pool: datapool
+          annotations:
+            summary: "ZFS storage pool datapool on CM5 is degraded or faulted"
+            description: "ZFS pool datapool on cm5-node is no longer ONLINE."
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-on-prem-edge
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  on-prem-edge-infrastructure.json: |
+    {
+      "title": "On-Prem Edge Infrastructure",
+      "uid": "on-prem-edge-cm5",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "15s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "RPi CM5 SoC & NVMe Temperature (Celsius)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            { "expr": "rpi_cm5_soc_temperature_celsius", "legendFormat": "BCM2712 SoC Temp (C)" },
+            { "expr": "rpi_cm5_nvme_temperature_celsius", "legendFormat": "NVMe SSD Temp (C)" }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Power Supply 27W PD & Thermal Throttling Status",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            { "expr": "rpi_cm5_throttled_status_raw", "legendFormat": "Throttled Bitmask (0=OK)" },
+            { "expr": "rpi_cm5_under_voltage_active", "legendFormat": "Under-Voltage (0=OK)" }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "ZFS Pool (datapool) Capacity & Allocation",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            { "expr": "rpi_cm5_zfs_pool_size_bytes", "legendFormat": "Total Pool Size" },
+            { "expr": "rpi_cm5_zfs_pool_allocated_bytes", "legendFormat": "Allocated Bytes" },
+            { "expr": "rpi_cm5_zfs_pool_free_bytes", "legendFormat": "Free Bytes" }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "NVMe SMART Wear Level (%) & ZFS Health",
+          "type": "stat",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            { "expr": "rpi_cm5_nvme_percentage_used_ratio", "legendFormat": "NVMe Wear (%)" },
+            { "expr": "rpi_cm5_zfs_pool_online_status", "legendFormat": "ZFS ONLINE (1=Healthy)" }
+          ]
+        }
+      ]
+    }
