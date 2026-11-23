@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: python-platform
+  namespace: monitoring
+spec:
+  groups:
+    - name: python-platform.rules
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum by (namespace) (rate(http_requests_total{namespace=~"platform-staging|platform-production",service="python-platform",status_code=~"5..",path!~"/healthz|/ready"}[2m]))
+              /
+              clamp_min(sum by (namespace) (rate(http_requests_total{namespace=~"platform-staging|platform-production",service="python-platform",path!~"/healthz|/ready"}[2m])), 0.001)
+            ) > 0.02
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Application 5xx exceeded 2% in {{ $labels.namespace }}'
+        - alert: PodCrashLooping
+          expr: |
+            sum by (namespace, pod, container) (
+              increase(kube_pod_container_status_restarts_total{namespace=~"platform-staging|platform-production"}[10m])
+            ) > 3
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Container restarted more than 3 times in 10 minutes'
+        - alert: HighDiskUtilization
+          expr: |
+            max by (namespace, persistentvolumeclaim) (
+              kubelet_volume_stats_used_bytes{namespace=~"platform-staging|platform-production",persistentvolumeclaim="python-platform-data"}
+              /
+              kubelet_volume_stats_capacity_bytes{namespace=~"platform-staging|platform-production",persistentvolumeclaim="python-platform-data"}
+            ) > 0.85
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Application PVC usage exceeded 85%'
