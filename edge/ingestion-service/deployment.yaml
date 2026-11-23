@@ -17,6 +17,10 @@ spec:
         app: edge-ingestion-service
         tier: edge
     spec:
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
       imagePullSecrets:
         - name: jfrog-registry-secret
       containers:
@@ -28,16 +32,16 @@ spec:
           env:
             - name: APP_ENV
               value: "edge-cm5"
-            - name: ANNOTATION_DATA_DIR
+            - name: DATA_DIR
               value: "/data/annotation"
             - name: EDGE_PIPELINE_REVISION
-              value: "rev-2"
+              value: "rev-3"
           volumeMounts:
             - name: zfs-annotation-storage
               mountPath: /data/annotation
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /ready
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
