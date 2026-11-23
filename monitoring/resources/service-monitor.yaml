@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: python-platform
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames: [platform-staging, platform-production]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: python-platform
+      app.kubernetes.io/instance: python-platform
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
